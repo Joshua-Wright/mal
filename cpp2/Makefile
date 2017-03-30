@@ -9,6 +9,7 @@ ifeq ($(uname_S),Darwin)
 else
 	# Ubuntu 14.10 / docker
 	CXX=g++
+	INCPATHS=-Ivariant/include
 endif
 
 LD=$(CXX)
@@ -21,6 +22,7 @@ LDFLAGS=-O3 $(DEBUG) $(LIBPATHS) -L.
 
 # LIBSOURCES=Core.cpp Environment.cpp Reader.cpp ReadLine.cpp String.cpp \
 # 			Types.cpp Validation.cpp
+LIBSOURCES=printer.cpp Reader.cpp types.cpp
 LIBOBJS=$(LIBSOURCES:%.cpp=%.o)
 
 MAINS=$(wildcard step*.cpp)

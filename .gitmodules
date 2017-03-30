@@ -1,0 +1,3 @@
+[submodule "cpp2/variant"]
+	path = cpp2/variant
+	url = git@github.com:mapbox/variant.git
