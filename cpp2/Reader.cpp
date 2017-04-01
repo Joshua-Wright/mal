@@ -1,16 +1,47 @@
 #include "Reader.h"
+#include "debug.h"
+#include <algorithm>
+#include <cctype>
+#include <functional>
 #include <iostream>
+#include <locale>
 #include <regex>
 #include <string>
 #include <vector>
 
-using std::regex;
-const regex token_regex(R"regex([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))regex");
+// trim from start (in place)
+static inline void ltrim(std::string &s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+                                  std::not1(std::ptr_fun<int, int>(std::isspace))));
+}
 
-Reader::Reader(const vector<string> &input) : content(input), current_token(content.begin()) {}
+// trim from end (in place)
+static inline void rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(),
+                       std::not1(std::ptr_fun<int, int>(std::isspace)))
+              .base(),
+          s.end());
+}
+
+// trim from both ends (in place)
+static inline void trim(std::string &s) {
+  ltrim(s);
+  rtrim(s);
+}
+
+using std::regex;
+const regex token_regex(R"rgx([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*))rgx",
+                        std::regex_constants::ECMAScript | std::regex_constants::extended);
+const regex number_regex("[0-9]+");
+
+Reader::Reader(const vector<string> &input) : content(input), current_token(content.begin()) {
+  // trim whitespace of all tokens
+  for (auto &str : content) {
+    trim(str);
+  }
+}
 string Reader::next() {
-  current_token++;
-  return *current_token;
+  return *current_token++;
 }
 
 string Reader::peek() {
@@ -18,8 +49,16 @@ string Reader::peek() {
 }
 
 vector<string> tokenizer(const string &input) {
-  return vector<string>(std::sregex_token_iterator(input.begin(), input.end(), token_regex),
+  vector<string> tokens(std::sregex_token_iterator(input.begin(), input.end(), token_regex),
                         std::sregex_token_iterator());
+
+  std::cout << "tokens: ";
+  for (auto token : tokens) {
+    std::cout << token << " ";
+  }
+  std::cout << std::endl;
+
+  return tokens;
 }
 
 Reader read_str(const string &input) {
@@ -27,31 +66,28 @@ Reader read_str(const string &input) {
 }
 
 MalType read_form(Reader &r) {
-  switch (r.peek()[0]) {
-  case '(':
+  if (r.peek()[0] == '(') {
+    r.next();
     return read_list(r);
-  default:
+  } else {
     return read_atom(r);
   }
 }
 
 MalList read_list(Reader &r) {
-  r.next(); // read off the "("
   MalList lst;
-  while (r.peek() != ")") {
-    // std::cout << r.peek() << std::endl;
+  while (r.peek()[0] != ')') {
     lst.push_back(read_form(r));
   }
+  // consume ")"
+  r.next();
   return lst;
 }
 
 atom_t read_atom(Reader &r) {
   string next = r.next();
-  std::stringstream stream(next);
-  int64_t x;
-  char test;
-  if ((!(stream >> x)) || (stream >> test)) {
-    return x;
+  if (regex_match(next, number_regex)) {
+    return std::stoll(next);
   } else {
     return symbol(next);
   }
