@@ -1,1 +1,5 @@
 build/
+libmal.a
+cmake-build-debug
+.idea
+.deps

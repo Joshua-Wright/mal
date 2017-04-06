@@ -10,23 +10,22 @@
 #include <vector>
 
 // trim from start (in place)
-static inline void ltrim(std::string &s) {
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(),
-                                  std::not1(std::ptr_fun<int, int>(std::isspace))));
+template <class Predicate>
+static inline void ltrim(std::string &s, Predicate pred) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), pred));
 }
 
 // trim from end (in place)
-static inline void rtrim(std::string &s) {
-  s.erase(std::find_if(s.rbegin(), s.rend(),
-                       std::not1(std::ptr_fun<int, int>(std::isspace)))
-              .base(),
-          s.end());
+template <class Predicate>
+static inline void rtrim(std::string &s, Predicate pred) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), pred).base(), s.end());
 }
 
 // trim from both ends (in place)
-static inline void trim(std::string &s) {
-  ltrim(s);
-  rtrim(s);
+template <class Predicate>
+static inline void trim(std::string &s, Predicate pred) {
+  ltrim(s, pred);
+  rtrim(s, pred);
 }
 
 using std::regex;
@@ -35,9 +34,8 @@ const regex token_regex(R"rgx([\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^
 const regex number_regex("[0-9]+");
 
 Reader::Reader(const vector<string> &input) : content(input), current_token(content.begin()) {
-  // trim whitespace of all tokens
   for (auto &str : content) {
-    trim(str);
+    trim(str, [](int c) { return !(std::isspace(c) || c == ','); });
   }
 }
 string Reader::next() {
@@ -51,13 +49,6 @@ string Reader::peek() {
 vector<string> tokenizer(const string &input) {
   vector<string> tokens(std::sregex_token_iterator(input.begin(), input.end(), token_regex),
                         std::sregex_token_iterator());
-
-  std::cout << "tokens: ";
-  for (auto token : tokens) {
-    std::cout << token << " ";
-  }
-  std::cout << std::endl;
-
   return tokens;
 }
 
