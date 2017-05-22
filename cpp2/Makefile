@@ -15,7 +15,7 @@ endif
 LD=$(CXX)
 AR=ar
 
-DEBUG=-ggdb
+DEBUG=-ggdb -g3
 CXXFLAGS=-O3 -Wall $(DEBUG) $(INCPATHS) -std=c++11
 # LDFLAGS=-O3 $(DEBUG) $(LIBPATHS) -L. -lreadline -lhistory
 LDFLAGS=-O3 $(DEBUG) $(LIBPATHS) -L.

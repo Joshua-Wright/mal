@@ -46,10 +46,18 @@ string Reader::peek() {
   return *current_token;
 }
 
+bool Reader::has_next() {
+  return current_token != content.end();
+}
+
 vector<string> tokenizer(const string &input) {
-  vector<string> tokens(std::sregex_token_iterator(input.begin(), input.end(), token_regex),
-                        std::sregex_token_iterator());
-  return tokens;
+  try {
+    vector<string> tokens(std::sregex_token_iterator(input.begin(), input.end(), token_regex),
+                          std::sregex_token_iterator());
+    return tokens;
+  } catch (std::logic_error &l) {
+    return vector<string>();
+  }
 }
 
 Reader read_str(const string &input) {
@@ -67,8 +75,12 @@ MalType read_form(Reader &r) {
 
 MalList read_list(Reader &r) {
   MalList lst;
-  while (r.peek()[0] != ')') {
+  while (r.has_next() && r.peek()[0] != ')') {
     lst.push_back(read_form(r));
+  }
+  if (!r.has_next()) {
+    std::cerr << "Expected ')', got EOF" << std::endl;
+    return MalList();
   }
   // consume ")"
   r.next();

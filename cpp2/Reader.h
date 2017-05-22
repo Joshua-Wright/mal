@@ -19,6 +19,7 @@ public:
   string next();
 
   string peek();
+  bool has_next();
 };
 
 vector<string> tokenizer(const string &input);

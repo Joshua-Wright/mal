@@ -11,7 +11,7 @@ using std::vector;
 
 
 MalType read(string s) {
-  auto r = read_str(s);
+  Reader r = read_str(s);
   return read_form(r);
 }
 
